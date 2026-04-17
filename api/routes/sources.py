@@ -73,13 +73,19 @@ async def get_sources(
     result = await db.execute(query)
     sources = result.scalars().all()
     
-    # 计算过去24小时的文章数量
-    twenty_four_hours_ago = datetime.now(timezone.utc) - timedelta(hours=24)
-    
     # 构建响应
     items = []
     for source in sources:
+        # 查询该信息源累计抓取的文章数量（非重复）
+        total_articles_query = select(func.count()).where(
+            Article.source_id == source.id,
+            Article.is_duplicate == False
+        )
+        total_articles_result = await db.execute(total_articles_query)
+        total_articles = total_articles_result.scalar() or 0
+        
         # 查询该信息源过去24小时的文章数量
+        twenty_four_hours_ago = datetime.now(timezone.utc) - timedelta(hours=24)
         articles_24h_query = select(func.count()).where(
             Article.source_id == source.id,
             Article.crawled_at >= twenty_four_hours_ago
@@ -106,7 +112,7 @@ async def get_sources(
             avg_articles_per_crawl=source.avg_articles_per_crawl,
             avg_articles_per_day=source.avg_articles_per_day,
             discovery_rate=source.discovery_rate,
-            crawl_count=source.crawl_count,
+            crawl_count=total_articles,  # 改为累计文章数量
             articles_last_24h=articles_last_24h,
             consecutive_errors=source.consecutive_errors,
             error_count=source.error_count,

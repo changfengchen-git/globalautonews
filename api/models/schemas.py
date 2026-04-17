@@ -78,8 +78,8 @@ class SourceResponse(BaseModel):
     avg_articles_per_crawl: float
     avg_articles_per_day: float
     discovery_rate: float
-    crawl_count: int  # 累计抓取次数
-    articles_last_24h: int = 0  # 过去24小时抓取的文章数
+    crawl_count: int  # 累计文章数量（非重复）
+    articles_last_24h: int = 0  # 过去24小时文章数
     consecutive_errors: int
     error_count: int
     last_error: Optional[str] = None
