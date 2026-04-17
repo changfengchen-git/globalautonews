@@ -249,6 +249,8 @@ const loadSources = async () => {
     const params = {
       page: page.value,
       page_size: pageSize,
+      sort_by: sortField.value,
+      sort_order: sortOrder.value,
     }
     
     if (statusFilter.value) params.status = statusFilter.value
@@ -306,21 +308,9 @@ const sortBy = (field) => {
     sortOrder.value = 'asc'
   }
   
-  sources.value.sort((a, b) => {
-    let aVal = a[sortField.value] || ''
-    let bVal = b[sortField.value] || ''
-    
-    if (typeof aVal === 'string') {
-      aVal = aVal.toLowerCase()
-      bVal = bVal.toLowerCase()
-    }
-    
-    if (sortOrder.value === 'asc') {
-      return aVal > bVal ? 1 : -1
-    } else {
-      return aVal < bVal ? 1 : -1
-    }
-  })
+  // 重新加载数据（服务端排序）
+  page.value = 1
+  loadSources()
 }
 
 // 分页

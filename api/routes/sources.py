@@ -34,6 +34,8 @@ async def get_sources(
     country: Optional[str] = Query(None, description="按国家筛选"),
     language: Optional[str] = Query(None, description="按语种筛选"),
     status: Optional[str] = Query(None, description="按状态筛选"),
+    sort_by: Optional[str] = Query("id", description="排序字段 (id, name, crawl_count, consecutive_errors, crawl_interval_minutes)"),
+    sort_order: Optional[str] = Query("asc", description="排序方向 (asc, desc)"),
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页条数"),
     db: AsyncSession = Depends(get_db),
@@ -64,8 +66,23 @@ async def get_sources(
     total_result = await db.execute(count_query)
     total = total_result.scalar()
     
+    # 排序
+    sort_field_map = {
+        "id": Source.id,
+        "name": Source.name,
+        "crawl_count": Source.crawl_count,
+        "consecutive_errors": Source.consecutive_errors,
+        "crawl_interval_minutes": Source.crawl_interval_minutes,
+        "last_crawl_at": Source.last_crawl_at,
+    }
+    sort_column = sort_field_map.get(sort_by, Source.id)
+    if sort_order == "desc":
+        sort_column = sort_column.desc()
+    else:
+        sort_column = sort_column.asc()
+    
     # 排序和分页
-    query = query.order_by(Source.id)
+    query = query.order_by(sort_column)
     offset = (page - 1) * page_size
     query = query.offset(offset).limit(page_size)
     
