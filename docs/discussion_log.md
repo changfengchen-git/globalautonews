@@ -372,3 +372,86 @@ active → (连续错误>=5) → degraded → (连续错误>=15) → paused → 
 | `docs/discussion_log.md` | 设计讨论记录 |
 
 下一步：按 T1.01 → T1.02 → ... 顺序交给 AI 编程工具执行。
+
+---
+
+## 七、功能优化讨论（2026-04-17）
+
+### 7.1 优化需求清单
+
+用户提出以下7项优化需求：
+
+| 序号 | 需求 | 状态 |
+|-----|------|-----|
+| 1 | 增量抓取：首次抓30天，后续只抓新内容 | ✅ 已完成 |
+| 2 | 新闻类型过滤：排除隐私协议等非新闻页面 | ✅ 已完成 |
+| 3 | 三时区时间存储：本地/UTC/北京时间 | ✅ 已完成 |
+| 4 | 免费翻译方案：MyMemory API + 批量翻译 | ✅ 已完成 |
+| 5 | 修复筛选bug：前端参数名与后端匹配 | ✅ 已完成 |
+| 6 | 翻页功能：从无限加载改为标准分页 | ✅ 已完成 |
+| 7 | 站点统计：累计文章数 + 24小时文章数 | ✅ 已完成 |
+
+### 7.2 技术实现要点
+
+#### 7.2.1 增量抓取逻辑
+- 位置：`crawler/engine/scheduler.py`
+- 首次抓取：`last_crawl_at` 为 None 时，阈值 = now - 30天
+- 后续抓取：阈值 = `last_crawl_at` - 1小时（留余量）
+- RSS 和 HTML 抓取都应用时间过滤
+
+#### 7.2.2 新闻类型过滤
+- 位置：`crawler/extractors/generic.py`
+- URL路径过滤：排除 /privacy, /about, /contact, /login 等
+- 标题关键词过滤：排除 "Privacy Policy", "Terms of Service" 等
+- 内容长度检查：小于100字符的页面跳过
+
+#### 7.2.3 三时区时间存储
+- 数据库新增字段：`published_at_local`, `published_at_beijing`
+- 时区映射：40+国家代码到时区的映射表
+- 工具函数：`convert_to_three_times()` 在 `scheduler.py` 中
+
+#### 7.2.4 免费翻译方案
+- 位置：`api/services/translate.py`
+- MyMemory API：免费每天5000字符
+- 批量翻译：合并多条文本用分隔符，翻译后再分割
+- 优先级：DeepL > MyMemory > Google > Mock
+
+#### 7.2.5 筛选bug修复
+- 前端参数：`languages` → `language`, `countries` → `country`
+- 后端只支持单选，前端取第一个值
+
+#### 7.2.6 翻页功能
+- 前端：`NewsFeed.vue` 从无限加载改为标准分页
+- 每页20条，显示页码、总数、上一页/下一页按钮
+
+#### 7.2.7 站点统计
+- 累计文章数：`SELECT COUNT(*) FROM articles WHERE source_id = ? AND is_duplicate = FALSE`
+- 24小时文章数：`SELECT COUNT(*) FROM articles WHERE source_id = ? AND crawled_at >= NOW() - INTERVAL '24 hours'`
+- 修复：`crawl_count` 从抓取次数改为累计文章数量
+
+### 7.3 排序功能修复
+
+**问题**：前端使用客户端排序，只对当前页有效
+
+**解决方案**：
+- 后端API添加 `sort_by` 和 `sort_order` 参数
+- 前端改为服务端排序，点击表头重新请求API
+- 支持排序字段：`id`, `name`, `crawl_count`, `consecutive_errors`, `crawl_interval_minutes`, `last_crawl_at`
+
+### 7.4 Git提交记录
+
+| Commit | 说明 |
+|--------|------|
+| `c84ac60` | feat: 优化爬虫和前端功能（7项优化） |
+| `31242a6` | fix: 累计抓取改为累计文章数量 |
+| `1a24f36` | fix: 信息源排序功能（服务端排序） |
+
+### 7.5 待解决问题
+
+1. **部分站点抓取失败**：可能与IP地址有关，上线VPS后需调试
+2. **L3去重错误**：`decoding to str: need a bytes-like object` - 需进一步调查
+3. **事件聚类错误**：`representative_article_id` 已修复，但需验证
+
+---
+
+*讨论记录更新时间：2026-04-17 16:30*
