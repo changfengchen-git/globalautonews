@@ -104,14 +104,30 @@
           <span>加载中...</span>
         </div>
 
-        <!-- 无更多内容 -->
-        <div v-if="!hasMore && !loading" class="no-more">
-          <span>没有更多文章了</span>
+        <!-- 分页控件 -->
+        <div class="pagination" v-if="!loading && total > 0">
+          <button 
+            class="btn btn-secondary" 
+            @click="changePage(currentPage - 1)"
+            :disabled="currentPage <= 1"
+          >
+            上一页
+          </button>
+          <span class="page-info">
+            第 {{ currentPage }} 页 / 共 {{ totalPages }} 页 ({{ total }} 条)
+          </span>
+          <button 
+            class="btn btn-secondary" 
+            @click="changePage(currentPage + 1)"
+            :disabled="currentPage >= totalPages"
+          >
+            下一页
+          </button>
         </div>
 
-        <!-- 分页 -->
-        <div class="pagination" v-if="hasMore && !loading">
-          <button class="btn btn-secondary" @click="loadMore">加载更多</button>
+        <!-- 无更多内容 -->
+        <div v-if="!loading && total === 0" class="no-more">
+          <span>没有找到匹配的文章</span>
         </div>
       </main>
     </div>
@@ -136,9 +152,10 @@ const sortBy = ref('latest')
 // 数据
 const articles = ref([])
 const loading = ref(false)
-const hasMore = ref(true)
-const page = ref(1)
-const limit = 20
+const currentPage = ref(1)
+const pageSize = 20
+const total = ref(0)
+const totalPages = ref(0)
 
 // 可用的筛选选项
 const availableLanguages = ref([
@@ -168,38 +185,33 @@ const loadArticles = async (reset = false) => {
   if (loading.value) return
   
   if (reset) {
-    page.value = 1
-    articles.value = []
-    hasMore.value = true
+    currentPage.value = 1
   }
 
   loading.value = true
 
   try {
     const params = {
-      page: page.value,
-      limit: limit,
-      sort: sortBy.value,
+      page: currentPage.value,
+      page_size: pageSize,
+      sort_by: sortBy.value === 'latest' ? 'published_at' : 'crawled_at',
     }
 
-    if (searchQuery.value) params.q = searchQuery.value
-    if (selectedLanguages.value.length) params.languages = selectedLanguages.value.join(',')
-    if (selectedCountries.value.length) params.countries = selectedCountries.value.join(',')
+    if (searchQuery.value) params.search = searchQuery.value
+    // 支持多选语言（后端只支持单选，取第一个）
+    if (selectedLanguages.value.length) params.language = selectedLanguages.value[0]
+    // 支持多选国家（后端只支持单选，取第一个）
+    if (selectedCountries.value.length) params.country = selectedCountries.value[0]
     if (selectedSource.value) params.source_id = selectedSource.value
     if (dateFrom.value) params.date_from = dateFrom.value
     if (dateTo.value) params.date_to = dateTo.value
-    if (!showDuplicates.value) params.exclude_duplicates = true
+    params.is_duplicate = showDuplicates.value
 
     const data = await articlesApi.getList(params)
     
-    if (reset) {
-      articles.value = data.items || []
-    } else {
-      articles.value = [...articles.value, ...(data.items || [])]
-    }
-
-    hasMore.value = data.items && data.items.length === limit
-    page.value++
+    articles.value = data.items || []
+    total.value = data.total || 0
+    totalPages.value = Math.ceil(total.value / pageSize)
   } catch (error) {
     console.error('Failed to load articles:', error)
   } finally {
@@ -207,14 +219,18 @@ const loadArticles = async (reset = false) => {
   }
 }
 
+// 切换页码
+const changePage = (page) => {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+  loadArticles(false)
+  // 滚动到顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 // 搜索
 const handleSearch = () => {
   loadArticles(true)
-}
-
-// 加载更多
-const loadMore = () => {
-  loadArticles(false)
 }
 
 // 重置筛选
@@ -371,7 +387,20 @@ onMounted(() => {
 }
 
 .pagination {
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
   padding: 20px;
+}
+
+.page-info {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

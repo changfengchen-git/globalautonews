@@ -101,6 +101,108 @@ from crawler.engine.frequency import FrequencyController
 from crawler.engine.health import get_health_manager
 from crawler.extractors.generic import GenericExtractor
 from crawler.extractors.adapter import get_adapter_extractor, ExtractResult as AdapterExtractResult
+
+# 国家代码到时区的映射（用于计算当地时间）
+COUNTRY_TIMEZONE_MAP = {
+    # 亚洲
+    'CN': 'Asia/Shanghai',  # 中国
+    'JP': 'Asia/Tokyo',     # 日本
+    'KR': 'Asia/Seoul',     # 韩国
+    'IN': 'Asia/Kolkata',   # 印度
+    'TH': 'Asia/Bangkok',   # 泰国
+    'VN': 'Asia/Ho_Chi_Minh',  # 越南
+    'ID': 'Asia/Jakarta',   # 印度尼西亚
+    'MY': 'Asia/Kuala_Lumpur',  # 马来西亚
+    'PH': 'Asia/Manila',    # 菲律宾
+    'SG': 'Asia/Singapore', # 新加坡
+    'TW': 'Asia/Taipei',    # 台湾
+    'HK': 'Asia/Hong_Kong', # 香港
+    
+    # 欧洲
+    'GB': 'Europe/London',  # 英国
+    'DE': 'Europe/Berlin',  # 德国
+    'FR': 'Europe/Paris',   # 法国
+    'IT': 'Europe/Rome',    # 意大利
+    'ES': 'Europe/Madrid',  # 西班牙
+    'NL': 'Europe/Amsterdam',  # 荷兰
+    'SE': 'Europe/Stockholm',  # 瑞典
+    'RU': 'Europe/Moscow',  # 俄罗斯
+    
+    # 美洲
+    'US': 'America/New_York',  # 美国（东部时间）
+    'CA': 'America/Toronto',   # 加拿大
+    'BR': 'America/Sao_Paulo', # 巴西
+    'MX': 'America/Mexico_City',  # 墨西哥
+    'AR': 'America/Buenos_Aires',  # 阿根廷
+    
+    # 大洋洲
+    'AU': 'Australia/Sydney',  # 澳大利亚
+    'NZ': 'Pacific/Auckland',  # 新西兰
+    
+    # 中东
+    'AE': 'Asia/Dubai',    # 阿联酋
+    'SA': 'Asia/Riyadh',   # 沙特阿拉伯
+    'IL': 'Asia/Jerusalem',  # 以色列
+    'TR': 'Europe/Istanbul',  # 土耳其
+}
+
+# 北京时间时区
+BEIJING_TZ = timezone(timedelta(hours=8))
+
+
+def convert_to_three_times(
+    published_at: Optional[datetime],
+    country: str,
+    source_timezone: Optional[str] = None
+) -> Tuple[Optional[datetime], Optional[datetime], Optional[datetime]]:
+    """
+    将发布时间转换为三个时间：本地时间、UTC时间、北京时间
+    
+    参数:
+        published_at: 原始发布时间（可能带时区，也可能不带）
+        country: 国家代码（如 'CN', 'US', 'JP'）
+        source_timezone: 源时区字符串（可选，优先使用）
+    
+    返回:
+        (published_at_local, published_at_utc, published_at_beijing)
+    """
+    if published_at is None:
+        return None, None, None
+    
+    # 确定源时区
+    source_tz = None
+    if source_timezone:
+        try:
+            from zoneinfo import ZoneInfo
+            source_tz = ZoneInfo(source_timezone)
+        except Exception:
+            pass
+    
+    if source_tz is None and country in COUNTRY_TIMEZONE_MAP:
+        try:
+            from zoneinfo import ZoneInfo
+            source_tz = ZoneInfo(COUNTRY_TIMEZONE_MAP[country])
+        except Exception:
+            pass
+    
+    # 如果原始时间没有时区信息，假设它是源时区的时间
+    if published_at.tzinfo is None:
+        if source_tz:
+            published_at = published_at.replace(tzinfo=source_tz)
+        else:
+            # 默认假设为UTC
+            published_at = published_at.replace(tzinfo=timezone.utc)
+    
+    # 1. 本地时间（保留原始时区信息）
+    published_at_local = published_at
+    
+    # 2. UTC时间
+    published_at_utc = published_at.astimezone(timezone.utc)
+    
+    # 3. 北京时间
+    published_at_beijing = published_at.astimezone(BEIJING_TZ)
+    
+    return published_at_local, published_at_utc, published_at_beijing
 from crawler.pipeline.dedup import DedupPipeline
 from crawler.pipeline.clustering import get_cluster_manager
 
@@ -236,25 +338,74 @@ class CrawlScheduler:
                 except Exception as log_error:
                     logger.error(f"Error logging crawl failure: {log_error}")
 
+    def _get_crawl_time_threshold(self, source: Source) -> Optional[datetime]:
+        """
+        获取抓取时间阈值，用于增量抓取
+        
+        - 首次抓取 (last_crawl_at 为 None): 只抓取最近 30 天的内容
+        - 后续抓取: 只抓取比 last_crawl_at 更新的内容
+        """
+        now = datetime.now(timezone.utc)
+        
+        if source.last_crawl_at is None:
+            # 首次抓取，只抓取最近 30 天
+            threshold = now - timedelta(days=30)
+            logger.debug(f"First crawl for {source.name}, threshold: {threshold}")
+        else:
+            # 后续抓取，只抓取比上次抓取时间新的内容
+            # 额外留 1 小时余量，防止漏掉边界内容
+            threshold = source.last_crawl_at - timedelta(hours=1)
+            logger.debug(f"Incremental crawl for {source.name}, threshold: {threshold}")
+        
+        return threshold
+
+    def _is_article_within_time_range(self, published_at: Optional[datetime], threshold: Optional[datetime]) -> bool:
+        """检查文章是否在时间范围内"""
+        if threshold is None:
+            return True
+        
+        if published_at is None:
+            # 没有发布时间的文章，允许抓取（可能是新文章）
+            return True
+        
+        # 确保两个时间都是 timezone-aware
+        if published_at.tzinfo is None:
+            published_at = published_at.replace(tzinfo=timezone.utc)
+        
+        return published_at >= threshold
+
     async def _crawl_via_rss(self, source: Source, session) -> Tuple[int, int, int]:
         """通过 RSS 抓取文章列表并处理每篇文章"""
         articles_found = 0
         articles_new = 0
         articles_duplicate = 0
+        articles_skipped = 0
         
         try:
+            # 获取时间阈值
+            time_threshold = self._get_crawl_time_threshold(source)
+            
             # 解析 RSS
             feed_items = await self.rss_handler.parse_feed(source.rss_url)
-            articles_found = len(feed_items)
             
-            logger.debug(f"RSS feed for {source.name}: {articles_found} items")
+            # 过滤时间范围内的文章
+            filtered_items = []
+            for item in feed_items:
+                if self._is_article_within_time_range(item.published_at, time_threshold):
+                    filtered_items.append(item)
+                else:
+                    articles_skipped += 1
+            
+            articles_found = len(filtered_items)
+            
+            logger.debug(f"RSS feed for {source.name}: {len(feed_items)} items, {articles_found} within time range, {articles_skipped} skipped")
             
             # 处理每篇文章
-            for item in feed_items[:30]:  # 限制最多 30 篇
+            for item in filtered_items[:30]:  # 限制最多 30 篇
                 if not item.url:
                     continue
                 
-                status = await self._process_article(item.url, source, session)
+                status = await self._process_article(item.url, source, session, time_threshold)
                 
                 if status == "new":
                     articles_new += 1
@@ -273,6 +424,9 @@ class CrawlScheduler:
         articles_duplicate = 0
         
         try:
+            # 获取时间阈值
+            time_threshold = self._get_crawl_time_threshold(source)
+            
             # 获取列表页 HTML
             result = await self.fetcher.fetch(source.url, rendering="static")
             
@@ -288,7 +442,7 @@ class CrawlScheduler:
             
             # 处理每篇文章
             for article_url in article_urls[:30]:  # 限制最多 30 篇
-                status = await self._process_article(article_url, source, session)
+                status = await self._process_article(article_url, source, session, time_threshold)
                 
                 if status == "new":
                     articles_new += 1
@@ -300,7 +454,13 @@ class CrawlScheduler:
         
         return articles_found, articles_new, articles_duplicate
 
-    async def _process_article(self, article_url: str, source: Source, session) -> str:
+    async def _process_article(
+        self, 
+        article_url: str, 
+        source: Source, 
+        session,
+        time_threshold: Optional[datetime] = None
+    ) -> str:
         """
         处理单篇文章：抓取→提取→去重→聚类→入库
         返回: "new" | "duplicate" | "failed" | "skipped"
@@ -360,6 +520,11 @@ class CrawlScheduler:
                 logger.debug(f"Low quality extraction: {article_url} (score: {extract_result.quality_score})")
                 return "skipped"
             
+            # 增量抓取：检查文章发布时间是否在时间范围内
+            if time_threshold and not self._is_article_within_time_range(extract_result.published_at, time_threshold):
+                logger.debug(f"Article too old: {article_url} (published: {extract_result.published_at}, threshold: {time_threshold})")
+                return "skipped"
+            
             # L2-L4: 完整去重检查（包括标题、实体、嵌入）
             dedup_result = await self.dedup.check_duplicate(
                 url=article_url,
@@ -371,6 +536,13 @@ class CrawlScheduler:
             
             if dedup_result.is_duplicate:
                 logger.debug(f"L{dedup_result.dedup_level} duplicate: {article_url}")
+                
+                # 计算三个时间
+                published_at_local, published_at_utc, published_at_beijing = convert_to_three_times(
+                    extract_result.published_at,
+                    source.country
+                )
+                
                 # 即使是重复文章，也创建记录并关联到 event_cluster
                 article = Article(
                     source_id=source.id,
@@ -389,7 +561,9 @@ class CrawlScheduler:
                     image_urls=extract_result.image_urls,
                     language=extract_result.language or source.language,
                     country=source.country,
-                    published_at=extract_result.published_at,
+                    published_at=published_at_utc,
+                    published_at_local=published_at_local,
+                    published_at_beijing=published_at_beijing,
                     external_links=extract_result.external_links,
                     is_duplicate=True,
                     dedup_level=dedup_result.dedup_level,
@@ -405,6 +579,12 @@ class CrawlScheduler:
                 )
                 
                 return "duplicate"
+            
+            # 计算三个时间
+            published_at_local, published_at_utc, published_at_beijing = convert_to_three_times(
+                extract_result.published_at,
+                source.country
+            )
             
             # 创建 Article 对象并保存
             article = Article(
@@ -424,7 +604,9 @@ class CrawlScheduler:
                 image_urls=extract_result.image_urls,
                 language=extract_result.language or source.language,
                 country=source.country,
-                published_at=extract_result.published_at,
+                published_at=published_at_utc,
+                published_at_local=published_at_local,
+                published_at_beijing=published_at_beijing,
                 external_links=extract_result.external_links,
                 is_duplicate=False,
                 dedup_level=None,

@@ -125,8 +125,10 @@ class Article(Base):
     duplicate_of: Mapped[Optional[int]] = mapped_column(Integer)
     dedup_level: Mapped[Optional[int]] = mapped_column(Integer)
 
-    # 时间
-    published_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    # 时间（三个时间存储）
+    published_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))  # UTC时间（主要排序用）
+    published_at_local: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))  # 原文中的当地时间
+    published_at_beijing: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))  # 北京时间（东八区）
     crawled_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

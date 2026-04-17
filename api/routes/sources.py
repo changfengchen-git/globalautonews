@@ -7,7 +7,7 @@
     GET  /api/sources/{id}/health — 单个信息源的健康状态和最近抓取日志
     PATCH /api/sources/{id}      — 更新信息源（可更新 status, priority, tier, crawl_interval_minutes）
 """
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shared.models import Source, CrawlLog
+from shared.models import Source, CrawlLog, Article
 from api.database import get_db
 from api.models.schemas import SourceResponse, SourceListResponse
 
@@ -73,9 +73,20 @@ async def get_sources(
     result = await db.execute(query)
     sources = result.scalars().all()
     
+    # 计算过去24小时的文章数量
+    twenty_four_hours_ago = datetime.now(timezone.utc) - timedelta(hours=24)
+    
     # 构建响应
     items = []
     for source in sources:
+        # 查询该信息源过去24小时的文章数量
+        articles_24h_query = select(func.count()).where(
+            Article.source_id == source.id,
+            Article.crawled_at >= twenty_four_hours_ago
+        )
+        articles_24h_result = await db.execute(articles_24h_query)
+        articles_last_24h = articles_24h_result.scalar() or 0
+        
         item = SourceResponse(
             id=source.id,
             url=source.url,
@@ -95,6 +106,8 @@ async def get_sources(
             avg_articles_per_crawl=source.avg_articles_per_crawl,
             avg_articles_per_day=source.avg_articles_per_day,
             discovery_rate=source.discovery_rate,
+            crawl_count=source.crawl_count,
+            articles_last_24h=articles_last_24h,
             consecutive_errors=source.consecutive_errors,
             error_count=source.error_count,
             last_error=source.last_error,

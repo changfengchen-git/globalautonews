@@ -24,7 +24,9 @@ class ArticleResponse(BaseModel):
     language: str
     country: str
     image_url: Optional[str] = None
-    published_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None  # UTC时间
+    published_at_local: Optional[datetime] = None  # 原文当地时间
+    published_at_beijing: Optional[datetime] = None  # 北京时间
     crawled_at: datetime
     is_duplicate: bool
     dedup_level: Optional[int] = None
@@ -76,6 +78,8 @@ class SourceResponse(BaseModel):
     avg_articles_per_crawl: float
     avg_articles_per_day: float
     discovery_rate: float
+    crawl_count: int  # 累计抓取次数
+    articles_last_24h: int = 0  # 过去24小时抓取的文章数
     consecutive_errors: int
     error_count: int
     last_error: Optional[str] = None

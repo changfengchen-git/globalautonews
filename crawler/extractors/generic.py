@@ -179,6 +179,11 @@ class GenericExtractor:
             if result.content:
                 result.content_length = len(result.content)
             
+            # 检查是否是新闻文章（排除隐私协议、网站介绍等）
+            if not self._is_news_article(url, result.title, result.content):
+                logger.debug(f"Skipping non-news page: {url}")
+                return result
+            
             # 4. 提取作者
             result.author = metadata.author if metadata else None
             
@@ -431,3 +436,80 @@ class GenericExtractor:
         except Exception as e:
             logger.debug(f"Failed to parse date '{date_str}': {e}")
             return None
+
+    def _is_news_article(self, url: str, title: Optional[str], content: Optional[str]) -> bool:
+        """
+        判断页面是否是新闻文章，排除非新闻页面
+        
+        返回: True 表示是新闻文章，False 表示应该跳过
+        """
+        # URL 路径排除模式（非新闻页面）
+        url_exclude_patterns = [
+            # 隐私和条款
+            '/privacy', '/privacy-policy', '/privacypolicy',
+            '/terms', '/terms-of-service', '/terms-and-conditions', '/tos',
+            '/legal', '/disclaimer',
+            # 关于页面
+            '/about', '/about-us', '/about-us', '/about.html',
+            '/contact', '/contact-us', '/contact.html',
+            '/team', '/staff', '/editorial',
+            # 用户相关
+            '/login', '/signin', '/sign-in', '/register', '/signup', '/sign-up',
+            '/account', '/profile', '/settings', '/dashboard',
+            '/subscribe', '/subscription', '/membership',
+            # 静态页面
+            '/faq', '/help', '/support', '/sitemap', '/sitemap.xml',
+            '/advertise', '/advertising', '/partners',
+            '/careers', '/jobs',
+            # 订阅和通讯
+            '/newsletter', '/newsletters', '/podcast', '/podcasts',
+            '/video', '/videos', '/live', '/live-tv',
+            # 商城
+            '/shop', '/store', '/cart', '/checkout',
+        ]
+        
+        url_lower = url.lower()
+        path = urlparse(url).path.lower()
+        
+        # 检查 URL 路径是否匹配排除模式
+        for pattern in url_exclude_patterns:
+            if path.endswith(pattern) or path.endswith(pattern + '/'):
+                logger.debug(f"Skipping non-news URL (matches {pattern}): {url}")
+                return False
+        
+        # 标题排除关键词
+        title_exclude_keywords = [
+            'privacy policy', 'privacy notice', 'terms of service', 'terms and conditions',
+            'about us', 'about the company', 'contact us', 'contact information',
+            'cookie policy', 'cookie notice', 'disclaimer',
+            'subscribe', 'subscription', 'newsletter signup',
+            'sign in', 'sign up', 'log in', 'register',
+            'advertisement', 'advertise with us', 'sponsored',
+            'editorial policy', 'corrections', 'fact-checking',
+        ]
+        
+        if title:
+            title_lower = title.lower()
+            for keyword in title_exclude_keywords:
+                if keyword in title_lower:
+                    logger.debug(f"Skipping non-news article (title contains '{keyword}'): {url}")
+                    return False
+        
+        # 内容排除模式（内容太短或包含特定关键词）
+        if content:
+            content_lower = content.lower()
+            content_length = len(content)
+            
+            # 内容太短，可能是导航页或占位页
+            if content_length < 100:
+                logger.debug(f"Skipping page with too little content ({content_length} chars): {url}")
+                return False
+            
+            # 检查是否是纯导航/菜单内容
+            nav_keywords = ['home', 'news', 'sports', 'entertainment', 'business', 'technology']
+            nav_keyword_count = sum(1 for kw in nav_keywords if kw in content_lower)
+            if nav_keyword_count >= 5 and content_length < 500:
+                logger.debug(f"Skipping navigation page: {url}")
+                return False
+        
+        return True

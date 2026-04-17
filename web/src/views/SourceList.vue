@@ -85,6 +85,11 @@
               抓取间隔
               <span v-if="sortField === 'crawl_interval_minutes'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
             </th>
+            <th class="sortable" @click="sortBy('crawl_count')">
+              累计抓取
+              <span v-if="sortField === 'crawl_count'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th>24h文章</th>
             <th>最后抓取</th>
             <th>最后成功</th>
             <th>操作</th>
@@ -123,6 +128,14 @@
               </span>
             </td>
             <td>{{ formatInterval(source.crawl_interval_minutes) }}</td>
+            <td class="crawl-count-cell">
+              <span class="crawl-count">{{ source.crawl_count || 0 }}</span>
+            </td>
+            <td class="articles-24h-cell">
+              <span :class="['articles-24h', { 'has-articles': source.articles_last_24h > 0 }]">
+                {{ source.articles_last_24h || 0 }}
+              </span>
+            </td>
             <td>{{ formatTime(source.last_crawl_at) }}</td>
             <td :class="['success-cell', { 'never': !source.last_success_at }]">
               {{ formatTime(source.last_success_at) || '从未成功' }}
@@ -591,6 +604,21 @@ onMounted(() => {
 
 .error-cell .no-error {
   color: #22c55e;
+}
+
+.crawl-count-cell .crawl-count {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.articles-24h-cell .articles-24h {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.articles-24h-cell .articles-24h.has-articles {
+  color: #22c55e;
+  font-weight: 600;
 }
 
 .success-cell.never {
