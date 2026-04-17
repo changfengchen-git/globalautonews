@@ -1,0 +1,26 @@
+# car1.hk 适配器配置
+# 香港汽车新闻网站
+
+source_domain: car1.hk
+
+list_page:
+  article_selector: "article.post"
+  link_selector: "a.post-title"
+  link_attribute: "href"
+  max_links: 20
+
+article_page:
+  title_selector: "h1.entry-title"
+  content_selector: "div.entry-content"
+  date_selector: "time.published"
+  date_format: "%Y-%m-%d"
+  date_attribute: "datetime"
+  author_selector: "span.author-name"
+  image_selector: "div.entry-content img:first-child"
+  remove_selectors:
+    - "div.ad-container"
+    - "div.related-posts"
+    - "div.social-share"
+    - "div.comments"
+    - "script"
+    - "style"

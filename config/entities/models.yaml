@@ -1,0 +1,136 @@
+# 常见车型词典
+# 格式: 英文名: [其他语言/变体名称]
+# 至少 50 个热门车型
+
+# Tesla
+Model 3: [Model3, Model 3, モデル3, 모델3]
+Model Y: [ModelY, Model Y, モデルY, 모델Y]
+Model S: [ModelS, Model S, モデルS, 모델S]
+Model X: [ModelX, Model X, モデルX, 모델X]
+Cybertruck: [CyberTruck, サバートラック, 사이버트럭]
+
+# Toyota
+Camry: [凯美瑞, カムリ, 캠리, كامري]
+Corolla: [卡罗拉, カローラ, 코롤라, كورولا]
+RAV4: [RAV4, ラブ4, 라브4]
+Prius: [普锐斯, プリウス, 프리우스, بريوس]
+Highlander: [汉兰达, ハイランダー, 하이랜더, هايلاندر]
+Land Cruiser: [陆地巡洋舰, ランドクルーザー, 랜드크루저, لاند كروزر]
+Tacoma: [塔科马, タコマ, 타코마, تاكوما]
+Tundra: [坦途, ダンダ, 턴더, تاندرا]
+Supra: [牛魔王, スープラ, 슈프라, سوبرا]
+86/BRZ: [86, BRZ, 86, 86, 86]
+
+# Honda
+Civic: [思域, シビック, 시빅, سيفيك]
+Accord: [雅阁, アコード, 아코드, أكورد]
+CR-V: [CR-V, シーアールブイ, 시알브이, سي آر في]
+Pilot: [飞行员, パイロット, 파일럿, بايلوت]
+Odyssey: [奥德赛, オデッセイ, 오데세이, أوديسي]
+Fit: [飞度, フィット, 피트, فيت]
+HR-V: [HR-V, エイチアールブ이, HR-V, HR-V]
+
+# Nissan
+Altima: [天籁, アルティ마, 알티마, ألتيما]
+Sentra: [轩逸, セントラ, 센트را, سنترا]
+Rogue: [奇骏, ローグ, 로그, روغ]
+Leaf: [聆风, リーフ, 리프, ليف]
+GT-R: [战神, GT-R, GT-R, جي تي آر]
+Z: [Z, Z, Z, Z]
+
+# BMW
+3 Series: [3系, 3シリーズ, 3시리즈, الفئة 3]
+5 Series: [5系, 5シリーズ, 5시리즈, الفئة 5]
+7 Series: [7系, 7シリーズ, 7시리즈, الفئة 7]
+X3: [X3, X3, X3, X3]
+X5: [X5, X5, X5, X5]
+i4: [i4, i4, i4, i4]
+iX: [iX, iX, iX, iX]
+
+# Mercedes-Benz
+C-Class: [C级, Cクラス, C클래스, الفئة C]
+E-Class: [E级, Eクラス, E클래스, الفئة E]
+S-Class: [S级, Sクラス, S클래스, الفئة S]
+GLC: [GLC, GLC, GLC, GLC]
+GLE: [GLE, GLE, GLE, GLE]
+EQS: [EQS, EQS, EQS, EQS]
+
+# Volkswagen
+Golf: [高尔夫, ゴルフ, 골프, غولف]
+Passat: [帕萨特, パサート, 파사트, باسات]
+Tiguan: [途观, ティグアン, 티구안, تيغوان]
+ID.4: [ID.4, ID.4, ID.4, ID.4]
+Polo: [Polo, ポロ, 폴로, بولو]
+
+# Audi
+A4: [A4, A4, A4, A4]
+A6: [A6, A6, A6, A6]
+Q5: [Q5, Q5, Q5, Q5]
+e-tron: [e-tron, e-tron, e-tron, e-tron]
+
+# Ford
+F-150: [F-150, F-150, F-150, F-150]
+Mustang: [野马, マスタング, 머스탱, موستانج]
+Explorer: [探险者, エクスプローラー, 익스플로러, إكسبلورر]
+Bronco: [Bronco, ブロンコ, 브롱코, برونكو]
+
+# Chevrolet
+Silverado: [西尔维拉多, シルバラード, 실바라도, سيلفرادو]
+Corvette: [科尔维vette, コルベット, 코베트, كورفيت]
+Camaro: [科迈罗, カマロ, 카마로, كامارو]
+Equinox: [探界者, エクイノックス, 이쿼녹스, إكينوكس]
+
+# Hyundai
+Tucson: [途胜, ツーソン, 투싼, توسان]
+Santa Fe: [圣达菲, サンタ페, 산타페, سانتا في]
+Sonata: [索纳塔, ソナタ, 소나타, سوناتا]
+Ioniq: [Ioniq, アイオニック, 아이오닉, أيونيك]
+Palisade: [帕里斯帝, パリサイズ, 팰리세이д, باليسيد]
+
+# Kia
+Sportage: [狮跑, スポーテージ, 스포티지, سبورتاج]
+Sorento: [索兰托, ソレント, 소렌토, سورنتو]
+Telluride: [Telluride, テルライド, 텔루라이드, تيلورايد]
+EV6: [EV6, EV6, EV6, EV6]
+
+# BYD
+Han: [汉, 漢, 한, هان]
+Tang: [唐, 唐, 탕, تانغ]
+Song: [宋, 宋, 송, سونغ]
+Qin: [秦, 秦, 친, تشين]
+Seal: [海豹, シール, 씰, سيل]
+
+# Chinese EVs
+NIO ES6: [ES6, ES6, ES6, ES6]
+NIO ET7: [ET7, ET7, ET7, ET7]
+XPeng P7: [P7, P7, P7, P7]
+Li L9: [L9, L9, L9, L9]
+
+# Porsche
+911: [911, 911, 911, 911]
+Cayenne: [卡宴, カイエン, 카이엔, كايين]
+Taycan: [Taycan, タイカン, 타이칸, تايكان]
+Macan: [Macan, マカン, 마칸, ماكان]
+
+# Lamborghini
+Aventador: [埃文塔多, アベンタドール, 아벤타도르, أفينتادور]
+Huracán: [小牛, ヒュラカン, 우라칸, هوراكان]
+Urus: [Urus, ウルス, 우루스, أوروس]
+
+# Ferrari
+Roma: [Roma, ロマ, 로마, روما]
+SF90: [SF90, SF90, SF90, SF90]
+296: [296, 296, 296, 296]
+
+# Volvo
+XC60: [XC60, XC60, XC60, XC60]
+XC90: [XC90, XC90, XC90, XC90]
+EX90: [EX90, EX90, EX90, EX90]
+
+# Others
+Jeep Wrangler: [牧马人, ラングラー, 랭글러, رانجلر]
+Ford Mustang Mach-E: [Mach-E, マッハE, 머스탱 머-E, ماك-E]
+Rivian R1T: [R1T, R1T, R1T, R1T]
+Rivian R1S: [R1S, R1S, R1S, R1S]
+Lucid Air: [Air, エア, 에어, إير]
+Polestar 2: [Polestar 2, ポールスター2, 폴스타2, بولستار 2]

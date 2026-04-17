@@ -1,0 +1,52 @@
+# GlobalAutoNews 全局配置
+
+crawler:
+  # 默认抓取间隔（分钟）
+  default_interval_minutes: 240
+  # 最短抓取间隔（分钟）
+  min_interval_minutes: 30
+  # 最长抓取间隔（分钟）
+  max_interval_minutes: 1440
+  # 静态请求超时（秒）
+  static_timeout: 30
+  # 动态请求超时（秒）
+  dynamic_timeout: 60
+  # User-Agent 列表
+  user_agents:
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15"
+
+dedup:
+  # L2 SimHash 汉明距离阈值
+  simhash_threshold: 3
+  # L3 实体交集最少数量
+  entity_overlap_min: 2
+  # L3 时间窗口（小时）
+  time_window_hours: 24
+  # L4 余弦相似度阈值
+  cosine_threshold: 0.85
+
+embedding:
+  # 嵌入维度（EmbeddingGemma MRL）
+  dimensions: 256
+  # 本地模型名称
+  model_name: "google/embedding-gemma-3-308m"
+
+health:
+  # 进入 degraded 的连续错误阈值
+  degraded_threshold: 5
+  # 进入 paused 的连续错误阈值
+  paused_threshold: 15
+  # 自动归档天数（无新文章）
+  archive_days: 90
+  # 低频更新天数阈值
+  low_freq_days: 30
+
+api:
+  # 分页默认每页数量
+  page_size: 20
+  # 分页最大每页数量
+  max_page_size: 100

@@ -1,0 +1,166 @@
+/* GlobalAutoNews Dark Theme */
+:root {
+  --bg-primary: #0f1117;
+  --bg-secondary: #1a1d29;
+  --bg-card: #1a1d29;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --border-color: #2a2d3a;
+  --accent-color: #3b82f6;
+  --accent-hover: #2563eb;
+  --success-color: #22c55e;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.25rem; }
+
+p {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+a {
+  color: var(--accent-color);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+/* Cards */
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: box-shadow 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-size: 0.875rem;
+}
+
+.btn-primary {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+}
+
+.btn-secondary {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background-color: var(--border-color);
+}
+
+/* Forms */
+input, textarea, select {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  width: 100%;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-success {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: var(--success-color);
+}
+
+.badge-warning {
+  background-color: rgba(245, 158, 11, 0.2);
+  color: var(--warning-color);
+}
+
+.badge-error {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: var(--error-color);
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .navbar-menu {
+    gap: 10px;
+  }
+  
+  .nav-link {
+    padding: 6px 8px;
+    font-size: 0.875rem;
+  }
+}

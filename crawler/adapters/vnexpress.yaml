@@ -1,0 +1,25 @@
+# vnexpress.net 适配器配置
+# 越南新闻网站（包含汽车频道）
+
+source_domain: vnexpress.net
+
+list_page:
+  article_selector: "article.item-news"
+  link_selector: "h3 a"
+  link_attribute: "href"
+  max_links: 30
+
+article_page:
+  title_selector: "h1.title-detail"
+  content_selector: "article.fck_detail"
+  date_selector: "span.date"
+  date_format: "%d/%m/%Y - %H:%M"
+  author_selector: "span.author"
+  image_selector: "div.featured-media img"
+  remove_selectors:
+    - "div.box-adv"
+    - "div.related-news"
+    - "div/social_pin"
+    - "div/bottom-comment"
+    - "script"
+    - "style"

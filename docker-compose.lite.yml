@@ -1,0 +1,37 @@
+# 用法：docker compose -f docker-compose.yml -f docker-compose.lite.yml up
+version: "3.8"
+services:
+  postgres:
+    command: >
+      postgres
+        -c shared_buffers=32MB
+        -c work_mem=2MB
+        -c maintenance_work_mem=32MB
+        -c effective_cache_size=128MB
+        -c max_connections=15
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  crawler:
+    environment:
+      EMBEDDING_MODE: api
+      PLAYWRIGHT_ENABLED: "false"
+      MAX_CONCURRENCY: "2"
+    deploy:
+      resources:
+        limits:
+          memory: 600M
+
+  api:
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  web:
+    deploy:
+      resources:
+        limits:
+          memory: 32M

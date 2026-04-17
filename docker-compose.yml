@@ -1,0 +1,85 @@
+version: "3.8"
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: globalautonews
+      POSTGRES_USER: gan
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    command: >
+      postgres
+        -c shared_buffers=128MB
+        -c work_mem=4MB
+        -c maintenance_work_mem=64MB
+        -c effective_cache_size=512MB
+        -c max_connections=30
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gan -d globalautonews"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    restart: unless-stopped
+
+  crawler:
+    build: ./crawler
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./config:/app/config
+      - ./crawler/adapters:/app/adapters
+      - ./shared:/app/shared
+      - ./logs:/app/logs
+    environment:
+      DATABASE_URL: postgresql+asyncpg://gan:${DB_PASSWORD}@postgres:5432/globalautonews
+      EMBEDDING_MODE: ${EMBEDDING_MODE:-local}
+      PLAYWRIGHT_ENABLED: ${PLAYWRIGHT_ENABLED:-true}
+      MAX_CONCURRENCY: ${MAX_CONCURRENCY:-5}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+    restart: unless-stopped
+
+  api:
+    build: ./api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./shared:/app/shared
+    environment:
+      DATABASE_URL: postgresql+asyncpg://gan:${DB_PASSWORD}@postgres:5432/globalautonews
+      DEEPL_API_KEY: ${DEEPL_API_KEY:-}
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    restart: unless-stopped
+
+  web:
+    build: ./web
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    restart: unless-stopped
+
+volumes:
+  pgdata:
